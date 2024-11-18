@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QPushButton, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QInputDialog, QWidget
-from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtCore import Qt, QUrl, QEvent
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from src.logic import get_sessions
 
@@ -99,15 +99,6 @@ class MainApp(QMainWindow):
         self.web_view.setGeometry(0, 50, self.width(), self.height() - 50)  # Menyesuaikan dengan ukuran jendela
         super().resizeEvent(event)
 
-    def keyPressEvent(self, event):
-        """Override untuk menangani input keyboard"""
-        if event.key() == Qt.Key_F4 and event.modifiers() == Qt.AltModifier:
-            # Cegah aksi default untuk Alt + F4
-            event.ignore()  # Mengabaikan event Alt+F4
-            print("Alt + F4 tidak berfungsi.")
-        else:
-            super().keyPressEvent(event)  # Proses event lainnya
-
     def go_home(self):
         # Aksi untuk tombol Home
         self.web_view.setUrl(QUrl("https://ujian.pages.dev/h0"))  # Halaman utama ujian
@@ -119,10 +110,10 @@ class MainApp(QMainWindow):
         print("Reload Button Pressed")
 
     def close_app(self):
-        # Meminta password keluar sebelum menutup aplikasi
+        """Meminta password keluar sebelum menutup aplikasi"""
         password, ok = QInputDialog.getText(self, "Password Keluar", "Masukkan password keluar:")
         if ok and self.verify_exit_password(password):
-            self.close()  # Menutup aplikasi setelah password keluar benar
+            QApplication.quit()  # Tutup aplikasi langsung
         else:
             self.statusBar().showMessage("Password keluar salah! Coba lagi.")
 
@@ -139,20 +130,22 @@ class MainApp(QMainWindow):
         return False
 
     def closeEvent(self, event):
-        """Override untuk menonaktifkan close window dengan Alt+F4"""
-        # Pastikan jika event bukan dari tombol close atau Alt+F4
-        if event.spontaneous():
-            # Jika tombol keluar yang memerlukan password ditekan, tampilkan dialog password
-            password, ok = QInputDialog.getText(self, "Password Keluar", "Masukkan password keluar:")
-            if ok and self.verify_exit_password(password):
-                event.accept()  # Lanjutkan menutup aplikasi
-                print("Aplikasi ditutup dengan benar.")
-            else:
-                event.ignore()  # Abaikan penutupan jika password salah
-                self.statusBar().showMessage("Password keluar salah! Coba lagi.")
+        """Tampilkan dialog password ketika pengguna mencoba menutup aplikasi"""
+        password, ok = QInputDialog.getText(self, "Password Keluar", "Masukkan password keluar:")
+        if ok and self.verify_exit_password(password):
+            event.accept()  # Izinkan penutupan aplikasi
         else:
-            event.ignore()  # Jika Alt+F4 atau cara lain, batalkan
-            print("Menonaktifkan tombol close melalui Alt+F4.")
+            self.statusBar().showMessage("Password keluar salah! Coba lagi.")
+            event.ignore()  # Abaikan penutupan jika password salah
+
+    def eventFilter(self, source, event):
+        """Tangkap kombinasi tombol tertentu seperti Alt+F4 atau Alt+Tab"""
+        if event.type() == QEvent.KeyPress:
+            if (event.key() == Qt.Key_F4 and event.modifiers() == Qt.AltModifier) or \
+               (event.key() == Qt.Key_Tab and event.modifiers() == Qt.AltModifier):
+                self.exit_app()
+                return True
+        return super().eventFilter(source, event)
 
 
 if __name__ == "__main__":
