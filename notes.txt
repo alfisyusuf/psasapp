@@ -4,4 +4,4 @@ pip install PyQt5 PyQtWebEngine requests
 pip install pyinstaller
 
 build
-pyinstaller --version-file=version_info.txt --name="sbbs_exam" --onefile --noconsole --add-data "src;src" --icon=icon.ico main.py
+pyinstaller --version-file=version_info.txt --name="abbs_exam" --onefile --noconsole --add-data "src;src" --icon=icon.ico main.py
