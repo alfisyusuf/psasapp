@@ -1,0 +1,5 @@
+dependensi
+pip install PyQt5 PyQtWebEngine requests
+
+build
+pyinstaller --onefile --noconsole --add-data "src;src" --icon=icon.ico main.py
